@@ -1,0 +1,31 @@
+# ---- Gradle / mod builds ----
+.gradle/
+build/
+*.hprof
+
+# ---- Neutralino app ----
+# The desktop app source is not published. The mod in this repo is fully
+# functional on its own; the app is distributed as a prebuilt binary.
+app/
+node_modules/
+
+# ---- packaged output ----
+dist/
+Blur-Pack/
+*.exe
+
+# ---- IDE / editor ----
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+.lite_workspace.lua
+
+# ---- OS ----
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ---- logs / local junk ----
+*.log
+run/

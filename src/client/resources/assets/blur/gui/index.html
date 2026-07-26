@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blur</title>
+<style>
+  :root{
+    --bg:#07080d; --panel:#0e1018; --panel2:#12141f;
+    --line:#1d2030; --txt:#e7ecff; --dim:#8a90a8;
+    --cyan:#3ee7ff; --violet:#8b5cff; --pink:#ff5cc8; --good:#37e6a0; --warn:#ffcb45;
+    --glow:0 0 24px rgba(62,231,255,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(139,92,255,.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(62,231,255,.12), transparent 55%),
+      var(--bg);
+    color:var(--txt); font:14px/1.4 'Segoe UI',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; letter-spacing:.2px;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:26px 20px 60px}
+  header{display:flex;align-items:center;gap:18px;margin-bottom:22px;flex-wrap:wrap}
+  .logo{font-weight:800;font-size:24px;letter-spacing:8px;
+    background:linear-gradient(90deg,var(--cyan),var(--violet),var(--pink));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .pill{display:flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--line);
+    border-radius:999px;background:var(--panel);font-weight:600;font-size:12px;letter-spacing:1px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--dim);transition:.2s}
+  .pill.on .dot{background:var(--good);box-shadow:0 0 12px var(--good);animation:pulse 1.2s infinite}
+  .pill.on{border-color:rgba(55,230,160,.4)}
+  @keyframes pulse{50%{opacity:.45}}
+  .timer{margin-left:auto;font-variant-numeric:tabular-nums;font-size:26px;font-weight:700;
+    color:#fff;text-shadow:var(--glow)}
+  .conn{font-size:11px;color:var(--dim);letter-spacing:1px}
+  .live{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:16px;padding:16px 18px;position:relative;overflow:hidden}
+  .card .lab{font-size:11px;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase}
+  .card .val{font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.05;margin-top:6px}
+  .card .sub{font-size:11px;color:var(--dim);margin-top:2px}
+  .bar{height:6px;border-radius:6px;background:#171a27;margin-top:14px;overflow:hidden}
+  .bar > i{display:block;height:100%;width:0;border-radius:6px;transition:width .12s linear}
+  .c-cyan .val{color:var(--cyan)} .c-cyan .bar>i{background:linear-gradient(90deg,#1aa5c7,var(--cyan))}
+  .c-violet .val{color:#b49bff} .c-violet .bar>i{background:linear-gradient(90deg,#6b46d6,var(--violet))}
+  .graph{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:16px;padding:14px 16px 8px;margin-bottom:16px}
+  .graph .lab{font-size:11px;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+  canvas{width:100%;height:120px;display:block}
+  h2{font-size:12px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin:22px 2px 10px;font-weight:700}
+  .rec{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .stat .k{font-size:11px;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
+  .stat .v{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:4px;color:#fff}
+  .stat.hl .v{background:linear-gradient(90deg,var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  @media(max-width:820px){.live,.rec{grid-template-columns:repeat(2,1fr)}.timer{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">BLUR</div>
+    <div class="pill" id="statusPill"><span class="dot"></span><span id="statusText">IDLE</span></div>
+    <div class="timer" id="timer">00:00</div>
+  </header>
+
+  <section class="live">
+    <div class="card c-cyan"><div class="lab">Crystal / 1s</div><div class="val" id="cps1">0</div>
+      <div class="sub">best this session: <span id="bcps1">0</span></div><div class="bar"><i id="bar-cps1"></i></div></div>
+    <div class="card c-cyan"><div class="lab">Crystal / 5s</div><div class="val" id="cps5">0</div>
+      <div class="sub">best this session: <span id="bcps5">0</span></div><div class="bar"><i id="bar-cps5"></i></div></div>
+    <div class="card c-violet"><div class="lab">Anchor / 1s</div><div class="val" id="anc1">0</div>
+      <div class="sub">best this session: <span id="banc1">0</span></div><div class="bar"><i id="bar-anc1"></i></div></div>
+    <div class="card c-violet"><div class="lab">Anchor / 5s</div><div class="val" id="anc5">0</div>
+      <div class="sub">best this session: <span id="banc5">0</span></div><div class="bar"><i id="bar-anc5"></i></div></div>
+  </section>
+
+  <div class="graph">
+    <div class="lab">Crystal speed &mdash; live (last 30s)</div>
+    <canvas id="graph" width="1080" height="120"></canvas>
+  </div>
+
+  <h2>This session</h2>
+  <section class="rec">
+    <div class="stat"><div class="k">Crystals placed</div><div class="v" id="s-crystals">0</div></div>
+    <div class="stat hl"><div class="k">Best crystal / 1s</div><div class="v" id="s-bcps1">0</div></div>
+    <div class="stat hl"><div class="k">Best crystal / 5s</div><div class="v" id="s-bcps5">0</div></div>
+    <div class="stat"><div class="k">Anchors hit</div><div class="v" id="s-anchors">0</div></div>
+    <div class="stat"><div class="k">Best anchor / 1s</div><div class="v" id="s-banc1">0</div></div>
+    <div class="stat"><div class="k">Best anchor / 5s</div><div class="v" id="s-banc5">0</div></div>
+    <div class="stat"><div class="k">Opponent totems</div><div class="v" id="s-totems">0</div></div>
+    <div class="stat hl"><div class="k">Biggest totem combo</div><div class="v" id="s-burst">0</div></div>
+  </section>
+
+  <h2>All-time records</h2>
+  <section class="rec">
+    <div class="stat hl"><div class="k">Record crystal / 1s</div><div class="v" id="a-bcps1">0</div></div>
+    <div class="stat hl"><div class="k">Record crystal / 5s</div><div class="v" id="a-bcps5">0</div></div>
+    <div class="stat"><div class="k">Record anchor / 1s</div><div class="v" id="a-banc1">0</div></div>
+    <div class="stat"><div class="k">Record anchor / 5s</div><div class="v" id="a-banc5">0</div></div>
+    <div class="stat"><div class="k">Total crystals</div><div class="v" id="a-crystals">0</div></div>
+    <div class="stat"><div class="k">Total anchors</div><div class="v" id="a-anchors">0</div></div>
+    <div class="stat hl"><div class="k">Record totem combo</div><div class="v" id="a-burst">0</div></div>
+    <div class="stat"><div class="k">Sessions played</div><div class="v" id="a-sessions">0</div></div>
+  </section>
+
+  <div style="margin-top:22px"><span class="conn" id="conn">connecting&hellip;</span></div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const SCALE = {cps1:16, cps5:55, anc1:14, anc5:50};
+  const bar = (id, val, max) => { $('bar-'+id).style.width = Math.min(100, val/max*100) + '%'; };
+  const mmss = ms => {
+    const s = Math.floor(ms/1000), m = Math.floor(s/60);
+    return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  };
+
+  const N = 300, buf = new Array(N).fill(0);
+  const cv = $('graph'), ctx = cv.getContext('2d');
+  function draw(){
+    const w=cv.width,h=cv.height,pad=6; ctx.clearRect(0,0,w,h);
+    const peak=Math.max(8,...buf);
+    ctx.strokeStyle='rgba(255,255,255,.05)'; ctx.lineWidth=1;
+    for(let g=1;g<4;g++){const y=pad+(h-2*pad)*g/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+    const x=i=>i/(N-1)*w, y=v=>h-pad-(h-2*pad)*(v/peak);
+    const grad=ctx.createLinearGradient(0,0,w,0);
+    grad.addColorStop(0,'#1aa5c7');grad.addColorStop(.6,'#3ee7ff');grad.addColorStop(1,'#8b5cff');
+    ctx.beginPath();ctx.moveTo(0,h);
+    for(let i=0;i<N;i++)ctx.lineTo(x(i),y(buf[i]));
+    ctx.lineTo(w,h);ctx.closePath();
+    const fill=ctx.createLinearGradient(0,0,0,h);
+    fill.addColorStop(0,'rgba(62,231,255,.28)');fill.addColorStop(1,'rgba(62,231,255,0)');
+    ctx.fillStyle=fill;ctx.fill();
+    ctx.beginPath();
+    for(let i=0;i<N;i++) i?ctx.lineTo(x(i),y(buf[i])):ctx.moveTo(x(i),y(buf[i]));
+    ctx.strokeStyle=grad;ctx.lineWidth=2;ctx.shadowColor='rgba(62,231,255,.6)';ctx.shadowBlur=8;ctx.stroke();
+    ctx.shadowBlur=0;
+  }
+
+  function update(d){
+    const L=d.live,S=d.session,A=d.allTime;
+    $('cps1').textContent=L.cps1s;$('cps5').textContent=L.cps5s;
+    $('anc1').textContent=L.anchor1s;$('anc5').textContent=L.anchor5s;
+    bar('cps1',L.cps1s,SCALE.cps1);bar('cps5',L.cps5s,SCALE.cps5);
+    bar('anc1',L.anchor1s,SCALE.anc1);bar('anc5',L.anchor5s,SCALE.anc5);
+    $('bcps1').textContent=S.bestCps1s;$('bcps5').textContent=S.bestCps5s;
+    $('banc1').textContent=S.bestAnchor1s;$('banc5').textContent=S.bestAnchor5s;
+    $('statusPill').classList.toggle('on',S.active);
+    $('statusText').textContent=S.active?'MEASURING':'IDLE';
+    $('timer').textContent=mmss(S.durationMs);
+    $('s-crystals').textContent=S.crystals;$('s-bcps1').textContent=S.bestCps1s;$('s-bcps5').textContent=S.bestCps5s;
+    $('s-anchors').textContent=S.anchors;$('s-banc1').textContent=S.bestAnchor1s;$('s-banc5').textContent=S.bestAnchor5s;
+    $('s-totems').textContent=S.opponentTotems;$('s-burst').textContent=S.biggestTotemBurst;
+    $('a-bcps1').textContent=A.bestCps1s;$('a-bcps5').textContent=A.bestCps5s;
+    $('a-banc1').textContent=A.bestAnchor1s;$('a-banc5').textContent=A.bestAnchor5s;
+    $('a-crystals').textContent=A.totalCrystals;$('a-anchors').textContent=A.totalAnchors;
+    $('a-burst').textContent=A.biggestTotemBurst;$('a-sessions').textContent=A.sessionsPlayed;
+    buf.push(L.cps1s);buf.shift();draw();
+  }
+
+  function connect(){
+    const es = new EventSource('/events');
+    es.onopen = () => { $('conn').textContent='● connected to game'; $('conn').style.color='var(--good)'; };
+    es.onmessage = e => { try{ update(JSON.parse(e.data)); }catch(_){} };
+    es.onerror = () => { $('conn').textContent='○ waiting for Minecraft…'; $('conn').style.color='var(--warn)'; };
+  }
+  draw(); connect();
+})();
+</script>
+</body>
+</html>

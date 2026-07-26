@@ -1,0 +1,72 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+}
+
+// Minecraft 1.21.11 is obfuscated, so this project uses the remapping Loom plugin
+// plus official Mojang mappings. 26.x ships unobfuscated and is built by mod-26x/.
+// Jar is named blur-<mod_version>+<mc_version>.jar.
+version = "${project.mod_version}+${project.minecraft_version}"
+group = project.maven_group
+base { archivesName = "blur" }
+
+repositories {
+	// Loom already adds the Minecraft/Fabric maven repos automatically.
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"blur" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+// The mod source lives at the repo root and is shared with mod-26x/; this project
+// only differs in HOW it builds. compat-1211 supplies the 1.21.11 bridge
+// (KeyBindingHelper + displayClientMessage); 26.x uses compat-26x instead.
+def sharedSrc = file("../src")
+
+sourceSets {
+	main {
+		java.srcDirs = ["$sharedSrc/main/java"]
+		resources.srcDirs = ["$sharedSrc/main/resources"]
+	}
+	client {
+		java.srcDirs = ["$sharedSrc/client/java", "$sharedSrc/compat-1211/java"]
+		resources.srcDirs = ["$sharedSrc/client/resources"]
+	}
+}
+
+dependencies {
+	// To change the versions, see the gradle.properties file.
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API.
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	def version = project.version
+	def mcVersion = project.minecraft_version
+	inputs.property "version", version
+	inputs.property "minecraft_version", mcVersion
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version, "minecraft_version": mcVersion
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}

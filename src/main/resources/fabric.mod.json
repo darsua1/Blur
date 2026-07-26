@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "blur",
+	"version": "${version}",
+	"name": "Blur",
+	"description": "Background CrystalPvP performance tracker. Measures crystal placement speed, anchor spam, opponent totem pops and session records, and streams them to a live premium dashboard. Read-only, does not automate anything.",
+	"authors": [
+		"darsua"
+	],
+	"license": "ARR",
+	"icon": "assets/blur/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"main": [
+			"com.blur.BlurMod"
+		],
+		"client": [
+			"com.blur.client.BlurClient"
+		]
+	},
+	"mixins": [
+		{
+			"config": "blur.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "=${minecraft_version}",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

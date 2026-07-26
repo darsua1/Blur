@@ -1,0 +1,75 @@
+plugins {
+	// Minecraft 26.x ships UNOBFUSCATED, so we use the plain Loom plugin
+	// (net.fabricmc.fabric-loom) rather than the remapping one used for 1.21.11
+	// (net.fabricmc.fabric-loom-remap). Loom then skips remapping entirely:
+	// no `mappings` line, mods are plain dependencies, and no remapJar step.
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+// Same source tree as the 1.21.11 project -- this project only differs in HOW it
+// builds (unobfuscated, Java 25). Jars are named blur-<mod>+<mc>.jar so all
+// target versions coexist in build/libs.
+version = "${project.mod_version}+${project.minecraft_version}"
+group = project.maven_group
+base { archivesName = "blur" }
+
+def sharedSrc = file("../src")
+
+repositories {
+	// Loom adds the Minecraft/Fabric maven repositories automatically.
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"blur" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+// Point both source sets at the shared 1.21.11 source tree (must come AFTER
+// splitEnvironmentSourceSets(), which is what creates the `client` source set).
+sourceSets {
+	main {
+		java.srcDirs = ["$sharedSrc/main/java"]
+		resources.srcDirs = ["$sharedSrc/main/resources"]
+	}
+	client {
+		// shared client code + the 26.x-specific bridge
+		// (KeyMappingHelper + sendSystemMessage/sendOverlayMessage)
+		java.srcDirs = ["$sharedSrc/client/java", "$sharedSrc/compat-26x/java"]
+		resources.srcDirs = ["$sharedSrc/client/resources"]
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	// No `mappings` line: unobfuscated Minecraft needs no deobfuscation mappings.
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	def version = project.version
+	def mcVersion = project.minecraft_version
+	inputs.property "version", version
+	inputs.property "minecraft_version", mcVersion
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version, "minecraft_version": mcVersion
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+	withSourcesJar()
+}
